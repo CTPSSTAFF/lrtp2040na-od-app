@@ -21,11 +21,22 @@ var ne_states = 'postgis:mgis_nemask_poly';
 
 var towns_base = 'postgis:dest2040_towns_modelarea';
 var OD_districts = 'postgis:dest2040_districts_sm_circles';
-var roadways = 'postgis:ctps_roadinventory_grouped';			// Need to update to 2016 Road Inventory, when ready.
-var trips_crosstab = 'postgis:plan2035_od_hway2';      			// Just a placeholder
+var roadways = 'postgis:ctps_roadinventory_grouped';			
+var trips_crosstab = 'postgis:dest2040_od_hway_2016';      	// Default: just a placeholder
 var MA_mask = 'postgis:ctps_ma_wo_model_area';
 var current_mode = 'AUTO';
 var year = '';
+
+// Global store of O/D data read from CSV sources
+var OD_DATA = { 'hway_2016'     : null, 
+                'hway_2040'     : null,
+                'bikewalk_2016' : null,
+                'bikewalk_2040' : null,
+                'transit_2016'  : null, 
+                'transit_2040'  : null,
+                'trucks_2016'    : null,
+                'trucks_2040'   : null
+};
 
 //	Vector Layer Style Functions
 CTPS.lrtpOD.styleOrigin = function(feature) {
@@ -132,128 +143,185 @@ function popup(url) {
 
 
 /* ****************  2. INITIALIZE PAGE, DRAW MAP  *****************/
-CTPS.lrtpOD.init = function(){
-  
-    // Populate "select municipality" combo box.
-	var i;        
-	var oSelect = document.getElementById("selected_district"); 
-	var oOption;  // An <option> to be added to the  <select>.
-	for (i = 0; i < MPMUTILS.modelRegions_2012.length; i++) {           
+
+CTPS.lrtpOD.preInit = function() {
+    // Load the O/D data tables
+    var hway_2016_URL = './data/hway_2016.csv',
+        hway_2040_URL = './data/hway_2040.csv',
+        bikewalk_2016_URL = './data/bikewalk_2016.csv',
+        bikewalk_2040_URL = './data/bikewalk_2040.csv',
+        transit_2016_URL = './data/transit_2016.csv',
+        transit_2040_URL = './data/transit_2040.csv',
+        trucks_2016_URL = './data/trucks_2016.csv',
+        trucks_2040_URL = './data/trucks_2040.csv';     
+
+    var q = d3.queue()
+                .defer(d3.csv, hway_2016_URL)
+                .defer(d3.csv, hway_2040_URL)
+                .defer(d3.csv, bikewalk_2016_URL)
+                .defer(d3.csv, bikewalk_2040_URL)
+                .defer(d3.csv, transit_2016_URL)
+                .defer(d3.csv, transit_2040_URL)
+                .defer(d3.csv, trucks_2016_URL)
+                .defer(d3.csv, trucks_2040_URL)
+                .awaitAll(CTPS.lrtpOD.init);
+} // preInit()
+
+CTPS.lrtpOD.init = function(error, results){
+    if (error != null) {
+        alert("One or more requests to load data failed. Exiting application.");
+        return;         
+    }        
+    OD_DATA['hway_2016'] = results[0];
+    OD_DATA['hway_2040'] = results[1];
+    OD_DATA['bikewalk_2016'] = results[2];   
+    OD_DATA['bikewalk_2040'] = results[3];
+    OD_DATA['transit_2016'] = results[4];   
+    OD_DATA['transit_2040'] = results[5];
+    OD_DATA['trucks_2016'] = results[6];   
+    OD_DATA['trucks_2040'] = results[7];
+
+    function cleanupCsvRec(rec) {
+        rec.table_index = +rec.table_index;
+        rec.origins = +rec.origins;
+        rec.gd01 = +rec.gd01; rec.gd02 = +rec.gd02; rec.gd03 = +rec.gd03; rec.gd04 = +rec.gd04; rec.gd05 = +rec.gd05;
+        rec.gd06 = +rec.gd06; rec.gd07 = +rec.gd07; rec.gd08 = +rec.gd08; rec.gd09 = +rec.gd09; rec.gd10 = +rec.gd10;
+        rec.gd11 = +rec.gd11; rec.gd12 = +rec.gd12; rec.gd13 = +rec.gd13; rec.gd14 = +rec.gd14; rec.gd15 = +rec.gd15;
+        rec.gd16 = +rec.gd16; rec.gd17 = +rec.gd17; rec.gd18 = +rec.gd18; rec.gd19 = +rec.gd19; rec.gd20 = +rec.gd20;
+        rec.gd21 = +rec.gd21; rec.gd22 = +rec.gd22; rec.gd23 = +rec.gd23; rec.gd24 = +rec.gd24; rec.gd25 = +rec.gd25;
+        rec.gd26 = +rec.gd26; rec.gd27 = +rec.gd27; rec.gd28 = +rec.gd28; rec.gd29 = +rec.gd29; rec.gd30 = +rec.gd30;
+        rec.gd31 = +rec.gd31; rec.gd32 = +rec.gd32; rec.gd33 = +rec.gd33; rec.gd34 = +rec.gd34; rec.gd35 = +rec.gd35;
+        rec.gd36 = +rec.gd36; rec.gd37 = +rec.gd37; rec.gd38 = +rec.gd38; rec.gd39 = +rec.gd39; rec.gd40 = +rec.gd40;
+        rec.gd41 = +rec.gd41; rec.gd42 = +rec.gd42;
+        rec.gd51 = +rec.gd51; rec.gd52 = +rec.gd52; rec.gd53 = +rec.gd53; rec.gd54 = +rec.gd54; rec.gd55 = +rec.gd55;
+    } 
+    
+    OD_DATA['hway_2016'].forEach(cleanupCsvRec);
+    OD_DATA['hway_2040'].forEach(cleanupCsvRec);
+    OD_DATA['bikewalk_2016'].forEach(cleanupCsvRec);
+    OD_DATA['bikewalk_2040'].forEach(cleanupCsvRec);
+    OD_DATA['transit_2016'].forEach(cleanupCsvRec);
+    OD_DATA['transit_2040'].forEach(cleanupCsvRec);
+    OD_DATA['trucks_2016'].forEach(cleanupCsvRec);
+    OD_DATA['trucks_2040'].forEach(cleanupCsvRec);
+    
+    var _DEBUG_HOOK = 0;
+
+    // Populate "select district" combo box.
+    var i;        
+    var oSelect = document.getElementById("selected_district"); 
+    var oOption;  // An <option> to be added to the  <select>.
+    for (i = 0; i < MPMUTILS.modelRegions_2012.length; i++) {           
         oOption = document.createElement("OPTION");
         oOption.value = MPMUTILS.modelRegions_2012[i][0];
         oOption.text = MPMUTILS.modelRegions_2012[i][0] + ', ' + MPMUTILS.modelRegions_2012[i][1];        
         oSelect.options.add(oOption);
     };
     
-	// Define WMS layers
-	var oBaseLayers = new ol.layer.Tile({	
-		source: new ol.source.TileWMS({
-			url		:  CTPS.lrtpOD.szWMSserverRoot,
-			params	: {
-				'LAYERS': 	[	ne_states,
-								roadways,
-								MA_mask,
-								OD_districts,
-								towns_base	],
-				'STYLES': 	[	'ne_states',
-								'RoadsMultiscaleGroupedBGblue',
-								'non_boston_mpo_gray_mask',
-								'Dest2040_districts_ext_numbers',
-								'Dest2040_towns_OD_boundaries'	],
-				'TILED': 	[	'true',
-								'true',
-								'true',
-								'true',
-								'false'	],
-				'TRANSPARENT': 	[	'false',
-									'true',
-									'true',
-									'true',
-									'true'	],
-				'IDS' : [	'ne_states',
-							'roadways',
-							'non_boston_mpo_gray_mask',
-							'OD_districts',
-							'towns_base'	]
-			}
-		})
-	}); 	
-	
-	// Define WFS LAYERS
-	CTPS.lrtpOD.oHighlightLayer = new ol.layer.Vector({
-		//"Selected District"
-		source	: new ol.source.Vector({
-			wrapX: false 
-		}),
-		style	: new ol.style.Style({
-			// ALTERNATIVE STYLE FOR 'DISTRICT SELECTION' VECTOR LAYER--HEAVY RED LINE ONLY
-			fill	: new ol.style.Fill({ 
-						color: 'rgba(0, 0, 0, 0)'
-					}), 
-			stroke 	: new ol.style.Stroke({ 
-						color: "#FF0000",
-						width: 3.0
-					})
-		})
-	});	
-	CTPS.lrtpOD.oDistrictVectorLayer = new ol.layer.Vector({
-		//"Origins-Few Trips"
-		source	: new ol.source.Vector({
-			wrapX: false 
-		})
-	});
-	
-	// Define MA State Plane Projection and EPSG:26986/EPSG:4326 transform functions
-	// because neither defined by OpenLayers, must be created manually.
-	// More on custom projections: 	http://openlayers.org/en/latest/examples/wms-custom-proj.html
-	//								http://openlayers.org/en/master/apidoc/ol.proj.Projection.html
-	//								https://openlayers.org/en/latest/apidoc/ol.proj.html#.addCoordinateTransforms
-	var projection = new ol.proj.Projection({
-		code: 'EPSG:26986',
-		extent: [33861.26,777514.31,330846.09,1228675.50],	// bounds are MA's minx, miny, maxx, plus NH's maxy
-		units: 'm'
-	});
-	ol.proj.addProjection(projection);
-	// proj4js: http://proj4js.org/
-	// https://epsg.io/26986#
-	var MaStatePlane = '+proj=lcc +lat_1=42.68333333333333 +lat_2=41.71666666666667 +lat_0=41 +lon_0=-71.5 +x_0=200000 +y_0=750000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
-	ol.proj.addCoordinateTransforms(
-		'EPSG:4326',
-		projection,
-		function(coordinate){
-			var WGS_to_MAState = proj4(MaStatePlane).forward(coordinate);
-			return WGS_to_MAState;
-		},
-		function(coordinate){
-			var MAState_to_WGS = proj4(MaStatePlane).inverse(coordinate);
-			return MAState_to_WGS;
-		}
-	);
-	
-	// Define ol3 Map
-	CTPS.lrtpOD.map = new ol.Map({
-		target	: 'map2',
-		controls: ol.control.defaults().extend([
-			new ol.control.ScaleLine({
-				units	: 'us'
-			})
-		]),
-		layers	: [	oBaseLayers,
-					CTPS.lrtpOD.oDistrictVectorLayer,
-					CTPS.lrtpOD.oHighlightLayer	],
-		view	: new ol.View({
-			projection: projection,
-			center	: CTPS.lrtpOD.mapCenter,
-			zoom	: CTPS.lrtpOD.mapZoom,
-			maxZoom	: 9,
-			minZoom	: 2
-		})
-	});	
-	
-	//CTPS.lrtpOD.map.addControl(new OpenLayers.Control.LayerSwitcher()); --> 	this feature is not available in ol3,
-	//																			but an add-in can be found here:
-	//																			https://github.com/walkermatt/ol3-layerswitcher
-	
+    // Define WMS layers
+    var oBaseLayers = new ol.layer.Tile({	
+        source: new ol.source.TileWMS({
+            url		:  CTPS.lrtpOD.szWMSserverRoot,
+            params	: {
+                'LAYERS': 	[	ne_states,
+                                roadways,
+                                MA_mask,
+                                OD_districts,
+                                towns_base	],
+                'STYLES': 	[	'ne_states',
+                                'RoadsMultiscaleGroupedBGblue',
+                                'non_boston_mpo_gray_mask',
+                                'Dest2040_districts_ext_numbers',
+                                'Dest2040_towns_OD_boundaries'	],
+                'TILED': 	[	'true',
+                                'true',
+                                'true',
+                                'true',
+                                'false'	],
+                'TRANSPARENT': 	[	'false',
+                                    'true',
+                                    'true',
+                                    'true',
+                                    'true'	],
+                'IDS' : [	'ne_states',
+                            'roadways',
+                            'non_boston_mpo_gray_mask',
+                            'OD_districts',
+                            'towns_base'	]
+            }
+        })
+    }); 	
+    
+    // Define WFS LAYERS
+    CTPS.lrtpOD.oHighlightLayer = new ol.layer.Vector({
+        //"Selected District"
+        source	: new ol.source.Vector({
+            wrapX: false 
+        }),
+        style	: new ol.style.Style({
+            // ALTERNATIVE STYLE FOR 'DISTRICT SELECTION' VECTOR LAYER--HEAVY RED LINE ONLY
+            fill	: new ol.style.Fill({ 
+                        color: 'rgba(0, 0, 0, 0)'
+                    }), 
+            stroke 	: new ol.style.Stroke({ 
+                        color: "#FF0000",
+                        width: 3.0
+                    })
+        })
+    });	
+    CTPS.lrtpOD.oDistrictVectorLayer = new ol.layer.Vector({
+        //"Origins-Few Trips"
+        source	: new ol.source.Vector({
+            wrapX: false 
+        })
+    });
+    
+    // Define MA State Plane Projection and EPSG:26986/EPSG:4326 transform functions
+    // because neither defined by OpenLayers, must be created manually.
+    // More on custom projections: 	http://openlayers.org/en/latest/examples/wms-custom-proj.html
+    //								http://openlayers.org/en/master/apidoc/ol.proj.Projection.html
+    //								https://openlayers.org/en/latest/apidoc/ol.proj.html#.addCoordinateTransforms
+    var projection = new ol.proj.Projection({
+        code: 'EPSG:26986',
+        extent: [33861.26,777514.31,330846.09,1228675.50],	// bounds are MA's minx, miny, maxx, plus NH's maxy
+        units: 'm'
+    });
+    ol.proj.addProjection(projection);
+    // proj4js: http://proj4js.org/
+    // https://epsg.io/26986#
+    var MaStatePlane = '+proj=lcc +lat_1=42.68333333333333 +lat_2=41.71666666666667 +lat_0=41 +lon_0=-71.5 +x_0=200000 +y_0=750000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
+    ol.proj.addCoordinateTransforms(
+        'EPSG:4326',
+        projection,
+        function(coordinate){
+            var WGS_to_MAState = proj4(MaStatePlane).forward(coordinate);
+            return WGS_to_MAState;
+        },
+        function(coordinate){
+            var MAState_to_WGS = proj4(MaStatePlane).inverse(coordinate);
+            return MAState_to_WGS;
+        }
+    );
+    
+    // Define ol3 Map
+    CTPS.lrtpOD.map = new ol.Map({
+        target	: 'map2',
+        controls: ol.control.defaults().extend([
+            new ol.control.ScaleLine({
+                units	: 'us'
+            })
+        ]),
+        layers	: [	oBaseLayers,
+                    CTPS.lrtpOD.oDistrictVectorLayer,
+                    CTPS.lrtpOD.oHighlightLayer	],
+        view	: new ol.View({
+            projection: projection,
+            center	: CTPS.lrtpOD.mapCenter,
+            zoom	: CTPS.lrtpOD.mapZoom,
+            maxZoom	: 9,
+            minZoom	: 2
+        })
+    });	 
 }	//   END OF 'INIT' FUNCTION
 
 
@@ -336,7 +404,7 @@ CTPS.lrtpOD.searchForDistrict = function(){
 								*/
 							},  
 			failure		: 	function (qXHR, textStatus, errorThrown ) {
-								alert('WFS request in timerFunc failed.\n' +
+								alert('WFS request in searchForDistrict failed.\n' +
 										'Status: ' + textStatus + '\n' +
 										'Error:  ' + errorThrown);
 							}
@@ -351,7 +419,7 @@ CTPS.lrtpOD.searchForDistrict = function(){
 
 CTPS.lrtpOD.getMode = function(){
 
-    var current_year = '2012', future_year = '2040';
+    var current_year = '2016', future_year = '2040';
    
     $('#trips_grid').html('');
     if ($('#page_bottom').attr('class')==='unhidden'){                             // Link: get table of regions
@@ -362,56 +430,56 @@ CTPS.lrtpOD.getMode = function(){
 	CTPS.lrtpOD.choice_mode = +$("#selected_mode").val(); 
     switch(CTPS.lrtpOD.choice_mode){
     case 1:
-        trips_crosstab = 'postgis:plan2040_od_hway_2014';
-		// alert('table in use:  highway');
+        trips_crosstab = 'postgis:dest2040_od_hway_2016';
+		// alert('table in use:  2016 highway');
         current_mode = 'AUTO';
         year = current_year;
         break;
     case 2:
-        trips_crosstab = 'postgis:plan2040_od_transit_2014';
-		//  alert('table in use:  transit');
+        trips_crosstab = 'postgis:dest2040_od_transit_2016';
+		//  alert('table in use:  2016 transit');
         current_mode = 'TRANSIT';
         year = current_year;
         break;
     case 3:       
-        trips_crosstab = 'postgis:plan2040_od_bikewalk_2014';
-		// alert('table in use:  bike/walk');
+        trips_crosstab = 'postgis:dest2040_od_bikewalk_2016';
+		// alert('table in use:  2016 bike/walk');
         current_mode = 'BIKE/WALK';
         year = current_year;
         break;
     case 4:       
-        trips_crosstab = 'postgis:plan2040_od_trucks_2014';
-		// alert('table in use:  bike/walk');
+        trips_crosstab = 'postgis:dest2040_od_trucks_2016';
+		// alert('table in use:  2016 trucks');
         current_mode = 'TRUCK TRIPS';
         year = current_year;
         break; 
     case 5:
-        trips_crosstab = 'postgis:plan2040_od_hway_2040';
-    //    alert('table in use:  highway');
+        trips_crosstab = 'postgis:dest2040_od_hway_2040';
+    //    alert('table in use:  2040 highway');
         current_mode = 'AUTO';
         year = future_year;
         break;
     case 6:
-        trips_crosstab = 'postgis:plan2040_od_transit_2040';
-		// alert('table in use:  transit');
+        trips_crosstab = 'postgis:dest2040_od_transit_2040';
+		// alert('table in use:  2040 transit');
         current_mode = 'TRANSIT';
         year = future_year;
         break;
     case 7:       
-        trips_crosstab = 'postgis:plan2040_od_bikewalk_2040';
-		// alert('table in use:  bike/walk');
+        trips_crosstab = 'postgis:dest2040_od_bikewalk_2040';
+		// alert('table in use:  2040 bike/walk');
         current_mode = 'BIKE/WALK';
         year = future_year;
         break;
     case 8:       
-        trips_crosstab = 'postgis:plan2040_od_trucks_2040';
-		// alert('table in use:  bike/walk');
+        trips_crosstab = 'postgis:dest2040_od_trucks_2040';
+		// alert('table in use:  2040 trucks');
         current_mode = 'TRUCK TRIPS';
         year = future_year;
         break;            
     default:
-        alert('no table selected; default is highway');
-        trips_crosstab = 'postgis:plan2040_od_hway_2014';
+        alert('No table selected. Default is 2016 highway trips.');
+        trips_crosstab = 'postgis:dest2040_od_hway_2016';
         break;   
     }
 
@@ -453,7 +521,7 @@ CTPS.lrtpOD.getOriginData = function(){
 	szUrl += '&version=1.0.0';
 	szUrl += '&request=getfeature';
 	szUrl += '&typename=' + trips_crosstab;
-	szUrl += '&srsname=EPSG:26986';
+	// szUrl += '&srsname=EPSG:26986';
 	szUrl += '&outputformat=json';
 	//szUrl += '&propertyname=' + 'TABLE_INDEX,ORIGINS,' + place;	
 	$.ajax({ url		: szUrl,
@@ -463,17 +531,17 @@ CTPS.lrtpOD.getOriginData = function(){
 								var reader = new ol.format.GeoJSON();
 								aFeatures = reader.readFeatures(jqXHR.responseText);
 								if (aFeatures.length === 0) {
-									alert("No origin data reported for selected district:  " + place + " ; try another district.");
+									alert("No data returned by WFS request in getOriginData. District = " + place + ".");
 									CTPS.lrtpOD.clearSelection();
 									return;
-								};
+								}
 								
 								var sumOrigins = 0;
 								
 								// COMPUTE SUM OF TRIPS TO USE IN CALCULATING PERCENTAGES FOR EACH ORIGIN
 								for (var i = 0; i < aFeatures.length; i++) {
 									sumOrigins += +(aFeatures[i].getProperties()[place_lowercase]);
-								};
+								}
 								
 								// Populate myDataOrigins table with WFS data
 								for (var i = 0; i < aFeatures.length; i++) {
@@ -487,28 +555,28 @@ CTPS.lrtpOD.getOriginData = function(){
 										orig_trips,
 										orig_pct
 									]);
-								};
+								}
 								
 								CTPS.lrtpOD.myDataOrigins.sort(function(a,b){				
 									var stna = parseInt(a[0]), stnb = parseInt(b[0]);
 									if (stna > stnb)
-										return 1
+										return 1;
 									if (stna < stnb)
-										return -1
-									return 0	//default value if no sorting
+										return -1;
+									return 0;	//default value if no sorting
 								});
 					  
 								var dat_index = 1;	// marker for ORIGIN data
 								CTPS.lrtpOD.queryVectorLayers(dat_index);
 								if ($('#legendDest').attr('class')==='turned_on'){
 									toggle_turn_on('legendDest')
-								};
+								}
 								if ($('#legendOrig').attr('class')==='turned_off'){
 									toggle_turn_on('legendOrig')
-								}; 		
+								}		
 							},  
 			failure		: 	function (qXHR, textStatus, errorThrown ) {
-								alert('WFS request in timerFunc failed.\n' +
+								alert('WFS request in getOriginData failed.\n' +
 										'Status: ' + textStatus + '\n' +
 										'Error:  ' + errorThrown);
 							}
@@ -538,7 +606,7 @@ CTPS.lrtpOD.getDestinationData = function(){
 		szUrl += '&version=1.0.0';
 		szUrl += '&request=getfeature';
 		szUrl += '&typename=' + trips_crosstab;
-		szUrl += '&srsname=EPSG:26986';
+		// szUrl += '&srsname=EPSG:26986';
 		szUrl += '&outputformat=json';
 		//szUrl += '&cqlFilter=(ORIGINS="' + current_district + '")';	
 	$.ajax({ url		: szUrl,
@@ -548,7 +616,7 @@ CTPS.lrtpOD.getDestinationData = function(){
 								var reader = new ol.format.GeoJSON();
 								aFeatures = reader.readFeatures(jqXHR.responseText);
 								if (aFeatures.length === 0) {
-									alert("No destination data reported for selected district:  " + place_num + " ; try another district.");
+									alert("No data returned by WFS request in getDestinationData. District = " + place + ".");
 									CTPS.lrtpOD.clearSelection();
 									return;
 								};
@@ -558,8 +626,8 @@ CTPS.lrtpOD.getDestinationData = function(){
 								for (var i=0; i<aFeatures.length; i++){
 									if (aFeatures[i].getProperties()['origins'] === current_district){
 										destinationData = aFeatures[i].getProperties();
-									};
-								};
+									}
+								}
 								
 								// FIRST LOOP TO GET SUM OF TRIPS FOR PERCENTAGE CALCULATION	
 								var dest_zone = [];
@@ -574,11 +642,11 @@ CTPS.lrtpOD.getDestinationData = function(){
 										dest_zone[i] = 'gd' + dest_number;             
 									} else {
 										dest_zone[i] = 'gd' + (9 + dest_number);              
-									};
+									}
 															   
 									dest_trips[i] = +destinationData[dest_zone[i]];	
 									sumDestinations += dest_trips[i];                            
-								};                      
+								}                   
                          
 								// SECOND LOOP TO CALCULATE PERCENTAGES AND WRITE ALL DATA TO DATA STORE
 								for(var i=0; i<aFeatures.length; i++){
@@ -590,7 +658,7 @@ CTPS.lrtpOD.getDestinationData = function(){
 										dest_zone_trunc = dest_zone[i].substr(2);
 									} else {
 										dest_zone_trunc = dest_zone[i].substr(3);
-									};
+									}
 									
 									CTPS.lrtpOD.myDataDestinations.push([
 										dest_index,
@@ -598,28 +666,28 @@ CTPS.lrtpOD.getDestinationData = function(){
 										dest_trips[i],
 										dest_pct
 									]);
-								};
+								}
                                                        
 								CTPS.lrtpOD.myDataDestinations.sort(function(a,b){				
 									var stna = parseInt(a[0]), stnb = parseInt(b[0]);
 									if (stna > stnb)
-										return 1
+										return 1;
 									if (stna < stnb)
-										return -1
-									return 0	// default value if no sorting
+										return -1;
+									return 0;	// default value if no sorting
 								});
               
 								var dat_index = 2;	// marker for DESTINATION data                    
 								CTPS.lrtpOD.queryVectorLayers(dat_index);
 								if ($('#legendOrig').attr('class')==='turned_on'){
 									toggle_turn_on('legendOrig')
-								};
+								}
 								if ($('#legendDest').attr('class')==='turned_off'){
 									toggle_turn_on('legendDest')
-								};                    
+								}                    
 							},  
 			failure		: 	function (qXHR, textStatus, errorThrown ) {
-								alert('WFS request in timerFunc failed.\n' +
+								alert('WFS request in getDestinationData failed.\n' +
 										'Status: ' + textStatus + '\n' +
 										'Error:  ' + errorThrown);
 							}

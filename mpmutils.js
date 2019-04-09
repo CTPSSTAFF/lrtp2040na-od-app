@@ -1,10 +1,5 @@
 var MPMUTILS = {};
 
-// Name of WMS & WFS servers addressable outside of CTPS firewall.
-MPMUTILS.szExternalServerRoot = '/map';
-MPMUTILS.szExternalWMSserverRoot = MPMUTILS.szExternalServerRoot + '/wms'; 
-MPMUTILS.szExternalWFSserverRoot = MPMUTILS.szExternalServerRoot + '/wfs';
-
 // Model Regions with Codes.
 MPMUTILS.modelRegions = [
 ["gd01","Downtown Boston E of Charles Street"],

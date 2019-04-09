@@ -1,75 +1,83 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-
-
-<head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-	<title>Plan OD Page</title>
+<!DOCTYPE html>
+<head lang="en">
+	<meta charset="utf-8">
+	<title>LRTP Needs Assessment - Origin/Destination Page</title>
 
 	<link rel="stylesheet" type="text/css" href="OD_page.css" />
-
-	<script src="../../../libs/jquery/jquery-1.7.1/jquery-1.7.1.js"></script>
-	<!--<script src="../../../libs/openlayers3/openlayers-3.20.1/build/ol.js"></script>-->
-	<script src="../../../libs/openlayers/Openlayers-4.2.0/build/ol.js"></script>
-	<link rel="stylesheet" href="../../../libs/openlayers/Openlayers-4.2.0/css/ol.css" type="text/css">
-	
-	<script src="../../../libs/proj4js/proj4js-2.4.3/dist/proj4-src.js"></script>
-
+    <!-- <link rel="stylesheet" href="../../../libs/openlayers/Openlayers-4.2.0/css/ol.css" type="text/css" /> -->
+    <link rel="stylesheet" href="libs/ol.css" type="text/css" />
+    
+	<!-- <script src="../../../libs/jquery/jquery-1.7.1/jquery-1.7.1.js"></script>
+	    <script src="../../../libs/openlayers/Openlayers-4.2.0/build/ol.js"></script>
+	    <script src="../../../libs/proj4js/proj4js-2.4.3/dist/proj4-src.js"></script>
+    -->
+    <script src="libs/jquery-1.7.1.min.js"></script>
+    <script src="libs/ol.js"></script>
+    <script src="libs/proj4.js"></script>
+    <script src="libs/underscore-min.js"></script>
+    <script src="libs/d3.js"></script>
+    
 	<script src="OD_page.js" type="text/javascript"></script>
 	<script src="accessibleGridMPM.js" type="text/javascript"></script> 
 	<script src="mpmutils.js" type="text/javascript"></script>  
-
 </head>
 
 
-<body onload="CTPS.lrtpOD.init()">
+<body>
+
 
 <div class="ctpsHeader">
     <div class="lightBlue"></div>
-    <div class="darkBlue"></div>
-    <a href="http://ctps.org/" target="_blank" title="Boston MPO">
-        <img src="images/ctps_header.png" title="Opens Boston MPO website in a new window" id ="banner" >
-    </a>
+    <div class="darkBlue"></div>  
+    <div id="banner">
+        <a href="http://ctps.org/" target="_blank" title="Boston MPO"> 
+            <img style="height:59px" src="./images/ctps_header.png" title="Opens Boston MPO website in a new window">
+       </a>
+    </div>
 </div>
 
 <div>
     <img src="images/header_bar01.png" width="100%" height="25">
 </div>
 
-<div id='banner_heading'>Origins and Destinations of Model Region Trips by Mode (2012-2040)</div>
+<div id='banner_heading'>Origins and Destinations of Model Region Trips by Mode (2016-2040)</div>
 
-<div id="notseen01" class="offscreen">Page opens with map frame on left and select district combo box on right.  Select a district using combo box then select year and mode from new combo box then pick either origin or destination data. Resulting table can then be read using table commands.  
+<div id="notseen01" class="offscreen">
+    Page opens with map frame on left and select district combo box on right.  
+    Select a district using combo box then select year and mode from new combo box then pick either origin or destination data. Resulting table can then be read using table commands.  
 </div>
 
 
 <div id="left_container">
-<div id="map2"></div>
+    <div id="map2"></div>
 
-<div id="legendOrig" class="turned_off">
-            <p class="pix_text">High-volume ORIGIN districts for trips TO district of interest:</p>
-            <span class="pix"><img src="images/orig01.gif" width="24" height="8" alt="" /></span><span class="pix_text">5,000 to 10,000 trips</span><br>
-            <span class="pix"><img src="images/orig02.gif" width="24" height="8" alt="" /></span><span class="pix_text">10,000 to 50,000 trips</span><br>
-            <span class="pix"><img src="images/orig03.gif" width="24" height="8" alt="" /></span><span class="pix_text">&gt; 50,000 trips</span>
-            <div id="exernals_note"><p class="pix_text">NOTE: Districts 51 through 54 are "external zones", representing points of entry to the region from outside (data for autos and trucks only).</p></div> 
-</div> 
+    <div id="legendOrig" class="turned_off">
+                <p class="pix_text">High-volume ORIGIN districts for trips TO district of interest:</p>
+                <span class="pix"><img src="images/orig01.gif" width="24" height="8" alt="" /></span><span class="pix_text">5,000 to 10,000 trips</span><br>
+                <span class="pix"><img src="images/orig02.gif" width="24" height="8" alt="" /></span><span class="pix_text">10,000 to 50,000 trips</span><br>
+                <span class="pix"><img src="images/orig03.gif" width="24" height="8" alt="" /></span><span class="pix_text">&gt; 50,000 trips</span>
+                <div id="exernals_note">
+                    <p class="pix_text">NOTE: Districts 51 through 54 are "external zones", representing points of entry to the region from outside (data for autos and trucks only).</p>
+                </div> 
+    </div> 
 
-<div id="legendDest" class="turned_off">
-            <p class="pix_text">High-volume DESTINATION districts for trips FROM district of interest:</p>
-            <span class="pix"><img src="images/dest01.gif" width="24" height="8" alt="" /></span><span class="pix_text">5,000 to 10,000 trips</span><br>
-            <span class="pix"><img src="images/dest02.gif" width="24" height="8" alt="" /></span><span class="pix_text">10,000 to 50,000 trips</span><br>
-            <span class="pix"><img src="images/dest03.gif" width="24" height="8" alt="" /></span><span class="pix_text">&gt; 50,000 trips</span>
-            <div id="exernals_note2"><p class="pix_text">NOTE: Districts 51 through 54 are "external zones", representing points of entry to the region from outside (data for autos and trucks only).</p></div>
-</div> 
- 
+    <div id="legendDest" class="turned_off">
+                <p class="pix_text">High-volume DESTINATION districts for trips FROM district of interest:</p>
+                <span class="pix"><img src="images/dest01.gif" width="24" height="8" alt="" /></span><span class="pix_text">5,000 to 10,000 trips</span><br>
+                <span class="pix"><img src="images/dest02.gif" width="24" height="8" alt="" /></span><span class="pix_text">10,000 to 50,000 trips</span><br>
+                <span class="pix"><img src="images/dest03.gif" width="24" height="8" alt="" /></span><span class="pix_text">&gt; 50,000 trips</span>
+                <div id="exernals_note2">
+                    <p class="pix_text">NOTE: Districts 51 through 54 are "external zones", representing points of entry to the region from outside (data for autos and trucks only).</p>
+                </div>
+    </div> 
 
-</div>                                                                                              <!--    end of left container   -->
+</div>  <!-- end of left container   -->                                                                                           
 
- <div id="right_container">                                                                         
+<div id="right_container">                                                                         
 
     <div id="inputbox">
     <!--  populate the combo box to allow choosing boarding station  -->
- <!--       <h2><label for="selected_district">Pick a District of Interest:</label></h2>   -->
+    <!--       <h2><label for="selected_district">Pick a District of Interest:</label></h2>   -->
         <form name="drop_list" action="" method="post" title="combo box used to select desired district">
          <h2><label for="selected_district">Pick a District of Interest:</label></h2>
             <select id="selected_district" onchange="CTPS.lrtpOD.resetDisplay()" title="use combo box to pick one of 41 Boston Region districts">                                            			
@@ -77,7 +85,7 @@
             </select>
             <input type="button" id="getTown" value="Locate District" onclick="CTPS.lrtpOD.searchForDistrict()" title="button displays selected district on map and opens combo box to select year and mode" />                                            
         </form>
-    </div>	                                                                 <!--    end of input box  -->	
+    </div>	<!--    end of inputbox div  -->	
 
     <div id="modeSelect" class="hidden">
     <!--  populate the combo box to allow choosing mode  -->
@@ -86,10 +94,10 @@
    <!--     <form name="drop_list2" action="" method="post" >      -->
             <select id="selected_mode" onchange="CTPS.lrtpOD.resetMode()">
                     <option value="">Select mode:</option>                    
-                    <option value="1">2012: Auto person-trips</option>
-                    <option value="2">2012: Transit person-trips</option>
-                    <option value="3">2012: Bike-walk person-trips</option>
-                    <option value="4">2012: Truck trips</option>
+                    <option value="1">2016: Auto person-trips</option>
+                    <option value="2">2016: Transit person-trips</option>
+                    <option value="3">2016: Bike-walk person-trips</option>
+                    <option value="4">2016: Truck trips</option>
                     <option value="5">2040: Auto person-trips</option>
                     <option value="6">2040: Transit person-trips</option>
                     <option value="7">2040: Bike-walk person-trips</option>
@@ -99,27 +107,31 @@
             <input type="button" id="getMode" value="Load Mode Table" onclick="CTPS.lrtpOD.getMode()" title="button loads table for selected district and year"/>                                
      <!--   </form>     -->
      <!--   </span>     -->
-    </div>	                                                                <!--    end of modeSelect  -->
+    </div> <!-- end of modeSelect div  -->
 
     <br />
     <div id="button_bar">
                 <input type="button" id="fetchDataOrigins" class="hidden" value="Get Origin Data" onclick="CTPS.lrtpOD.getOriginData()" title="button calls up table of origins for desired destination district." /> 
                 <input type="button" id="fetchDataDestinations" class="hidden" value="Get Destination Data" onclick="CTPS.lrtpOD.getDestinationData()" title="button calls up table of destinations for desired origin district."/>   
                 <input type="button" id="resetData" class="hidden" value="Clear Data" onclick="CTPS.lrtpOD.clearSelection()" title="button clears data table and district and mode selections"/>                        
-    </div>                                                                  <!--    end of button_bar  -->  
+    </div>  <!-- end of button_bar div -->  
      
-
     <div id="trips_grid"></div>
     
-    
-  <span id='page_bottom' class='hidden'>
-    <label for="list_link">Click this button to see the <br />complete list of codes and <br />included towns:</label>&nbsp;&nbsp;
-    <input type='button' id='list_link' value='List of Districts' onclick='CTPS.lrtpOD.regions_table()' title="opens table of all districts" /> <br /><br />
-<!--     For all trips from corridors <br />to Boston Business District <br />and Central Area:&nbsp;&nbsp;
-    <input type='button' id='BBD_window' value='Boston-Bound Trips' onclick='CTPS.lrtpOD.boston_trips()'  />     -->
-  </span>
-</div>                                                                                              <!--    end of right container    -->
+    <span id='page_bottom' class='hidden'>
+        <label for="list_link">Click this button to see the <br />complete list of codes and <br />included towns:</label>&nbsp;&nbsp;
+        <input type='button' id='list_link' value='List of Districts' onclick='CTPS.lrtpOD.regions_table()' title="opens table of all districts" /> <br /><br />
+        <!--     For all trips from corridors <br />to Boston Business District <br />and Central Area:&nbsp;&nbsp;
+         <input type='button' id='BBD_window' value='Boston-Bound Trips' onclick='CTPS.lrtpOD.boston_trips()'  />     -->
+   </span>
+</div>   <!-- end of right container div   -->
 
+<script>
+$(document).ready(function() {
+    CTPS.lrtpOD.preInit();
+});
+
+</script>
 
 </body>
 </html>
