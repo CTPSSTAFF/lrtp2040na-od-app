@@ -44,6 +44,11 @@
 //                                     The value of the parameter "dat_index" indicates whetner origin or destination
 //                                     data should be rendered. (Quadruble yeech.)
 //
+// The principal data structures (aside from those associated with the OpenLayers map, which are "vanilla") are:
+//
+//      CTPS.lrtpOD.myDataOrigins - last set of origin data retreived by WFS, and filtered by CTPS.lrtpOD.getOriginData
+//      CTPS.lrtpOD.myDataDestinations - last set of destination data retreived by WFS, and filtered by CTPS.lrtpOD.getDestinationData
+//
 // It is clear that aside from modifying the app to use CSV data sources rather than performing (repeated) WFS requests
 // to get O/D data, the code for this app is in need of some TLC. How much can be applied is a function of budget and
 // schedule matters outside of this reporter's control. I just have to make the damned thing work with the 2016/2040 data.
@@ -490,51 +495,51 @@ CTPS.lrtpOD.getMode = function(){
     };
          
   // get district name from combo box	
-	CTPS.lrtpOD.choice_mode = +$("#selected_mode").val(); 
+	CTPS.lrtpOD.choice_mode = $("#selected_mode").val(); 
     switch(CTPS.lrtpOD.choice_mode){
-    case 1:
+    case 'hway_2016':
         trips_crosstab = 'postgis:dest2040_od_hway_2016';
 		// alert('table in use:  2016 highway');
         current_mode = 'AUTO';
         year = current_year;
         break;
-    case 2:
+    case 'transit_2016':
         trips_crosstab = 'postgis:dest2040_od_transit_2016';
 		//  alert('table in use:  2016 transit');
         current_mode = 'TRANSIT';
         year = current_year;
         break;
-    case 3:       
+    case 'bikewalk_2016':       
         trips_crosstab = 'postgis:dest2040_od_bikewalk_2016';
 		// alert('table in use:  2016 bike/walk');
         current_mode = 'BIKE/WALK';
         year = current_year;
         break;
-    case 4:       
+    case 'trucks_2016':       
         trips_crosstab = 'postgis:dest2040_od_trucks_2016';
 		// alert('table in use:  2016 trucks');
         current_mode = 'TRUCK TRIPS';
         year = current_year;
         break; 
-    case 5:
+    case 'hway_2040':
         trips_crosstab = 'postgis:dest2040_od_hway_2040';
     //    alert('table in use:  2040 highway');
         current_mode = 'AUTO';
         year = future_year;
         break;
-    case 6:
+    case 'transit_2040':
         trips_crosstab = 'postgis:dest2040_od_transit_2040';
 		// alert('table in use:  2040 transit');
         current_mode = 'TRANSIT';
         year = future_year;
         break;
-    case 7:       
+    case 'bikewalk_2040':       
         trips_crosstab = 'postgis:dest2040_od_bikewalk_2040';
 		// alert('table in use:  2040 bike/walk');
         current_mode = 'BIKE/WALK';
         year = future_year;
         break;
-    case 8:       
+    case 'trucks_2040':       
         trips_crosstab = 'postgis:dest2040_od_trucks_2040';
 		// alert('table in use:  2040 trucks');
         current_mode = 'TRUCK TRIPS';
