@@ -1,4 +1,56 @@
-CTPS = {};
+// Origin/destination app for LRTP 2040 Needs Assessment
+//
+// The source code for this app was originally written by Mary McShane for the 2014 LRTP using OpenLayers version 2.
+// It was migrated to OpenLayers version 3 by Ethan Ebinger in 2017.
+// In 2018 it was (minimally) modified by yours truly to read data from a PostGIS data source rather than an Oracle/ArcGIS datasource.
+// It is currently being modified by yours truly for the 2040 LRTP. This work was originally envisioned as being minimal, 
+// but may wind up being more substantive, e.g., reading tabular data from in-memory arrays loaded from CSV files rather than 
+// via WFS requests to GeoServer. The tables in question are quite small (ca. 50 x 50 arrays of integers), and the inherited 
+// code didn't even bother to perform filetered WFS requests - the entire table in question was always loaded, 
+// and as no caching/memoization was performed, this could happen multiple times. We'll see how far I get with this.
+//
+// In the meantime, as a guide for the perplexed, the following is an overview of the code "as received."
+// The main functions (all names are preceded by 'CTPS.lrtpOD.') are:
+//
+//      preInit - Added by BK to load O/D data tables from CSV files, as preliminary step to (possibly) migrating
+//                the app to read from these rather than make WFS requests for O/D data
+//
+//      init    - Original initialization function; creates OpenLayers map
+// 
+//      searchForDistrict - Pans/zooms OpenLayers map to district selected by #selected_district combo box
+//
+//      getMode - Essentially, this deterimines the WFS layer containing the O/D data for the {mode, year} pair
+//                specified by the value of the #selected_mode combo box. The name of the indicated layer is
+//                is left in the global variable "trips_crosstab." (Yeech.)
+//
+//      getOriginData - Performs a WFS request to retrieve the origin data from the O/D layer whose name
+//                      is given by the vale of "trips_crosstab." (Double yeech.) The entire O/D table is
+//                      retrived; it is then filtered, the results of which are stored in CTPS.lrtpOD.myDataOrigins.
+//                      This function then calls queryVectorLayers, q.v., to render the data.
+//
+//      getDestinationData - Performs a WFS request to retrieve the desintation data from the O/D layer whose name
+//                           is given by the vale of "trips_crosstab." (Double yeech.) The entire O/D table is
+//                           retrived; it is then filtered, the results of which are stored in CTPS.lrtpOD.myDataDestinations.
+//                           This function then calls queryVectorLayers, q.v., to render the data.
+//
+//      queryVectorLayers(dat_index) - This function is misnamed, as it does TWO things:
+//                                     (1) Renders origin (or destination) data in tabular form;
+//                                         this is accomplished by calling "renderToGrid".
+//                                     (2) Renders origin (or destination) data as a vector layer in the OpenLayers map;                                
+//                                     The value of the parameter "dat_index" indicates whetner origin or destination
+//                                     data should be rendered. (Triple yeech.)
+//
+//      renderToGrid(dat_index) - Reners origin (or destination) data in tabular form.
+//                                     The value of the parameter "dat_index" indicates whetner origin or destination
+//                                     data should be rendered. (Quadruble yeech.)
+//
+// It is clear that aside from modifying the app to use CSV data sources rather than performing (repeated) WFS requests
+// to get O/D data, the code for this app is in need of some TLC. How much can be applied is a function of budget and
+// schedule matters outside of this reporter's control. I just have to make the damned thing work with the 2016/2040 data.
+// 
+// -- B. Krepp 4/09/2019
+
+var CTPS = {};
 CTPS.lrtpOD = {};
 CTPS.lrtpOD.map = {};
 CTPS.lrtpOD.tabs = {};
@@ -10,20 +62,21 @@ CSSClass = {};
 CTPS.lrtpOD.mapCenter = [232592.43833705207, 893760.2746035221];
 CTPS.lrtpOD.mapZoom = 3.0;
 
-
+// Endpoints for WMS and WFS services
 // CTPS.lrtpOD.szServerRoot  = 'http://www.ctps.org:8080/geoserver/'; 
 CTPS.lrtpOD.szServerRoot  = location.protocol + '//' + location.hostname + '/maploc/'; 
 CTPS.lrtpOD.szWMSserverRoot = CTPS.lrtpOD.szServerRoot + '/wms'; 
 CTPS.lrtpOD.szWFSserverRoot = CTPS.lrtpOD.szServerRoot + '/wfs';
 
-// VARIABLES FOR FREQUENTLY USED LAYER FILES
+// Variables for frequently used WMS map layer files
 var ne_states = 'postgis:mgis_nemask_poly';
-
 var towns_base = 'postgis:dest2040_towns_modelarea';
-var OD_districts = 'postgis:dest2040_districts_sm_circles';
-var roadways = 'postgis:ctps_roadinventory_grouped';			
-var trips_crosstab = 'postgis:dest2040_od_hway_2016';      	// Default: just a placeholder
 var MA_mask = 'postgis:ctps_ma_wo_model_area';
+var OD_districts = 'postgis:dest2040_districts_sm_circles';
+var roadways = 'postgis:ctps_roadinventory_grouped';
+// Default WFS data layer			
+var trips_crosstab = 'postgis:dest2040_od_hway_2016';   // Default: just a placeholder
+// Misc global vars
 var current_mode = 'AUTO';
 var year = '';
 
@@ -40,11 +93,11 @@ var OD_DATA = { 'hway_2016'     : null,
                 'bikewalk_2040' : null,
                 'transit_2016'  : null, 
                 'transit_2040'  : null,
-                'trucks_2016'    : null,
+                'trucks_2016'   : null,
                 'trucks_2040'   : null
 };
 
-//	Vector Layer Style Functions
+//	Vector layer style functions
 CTPS.lrtpOD.styleOrigin = function(feature) {
 	var fill;
 	var stroke;
@@ -145,9 +198,7 @@ function popup(url) {
 
 // End of utility functions
 
-
-/* ****************  2. INITIALIZE PAGE, DRAW MAP  *****************/
-
+// Pre-initialization: load CSV data files, then call original init function
 CTPS.lrtpOD.preInit = function() {
     // Load the O/D data tables
     var hway_2016_URL = './data/hway_2016.csv',
@@ -171,6 +222,7 @@ CTPS.lrtpOD.preInit = function() {
                 .awaitAll(CTPS.lrtpOD.init);
 }; // preInit()
 
+/* ****************  2. INITIALIZE PAGE, DRAW MAP  *****************/
 CTPS.lrtpOD.init = function(error, results){
     if (error != null) {
         alert("One or more requests to load CSV data failed. Exiting application.");
@@ -210,6 +262,17 @@ CTPS.lrtpOD.init = function(error, results){
     OD_DATA['trucks_2040'].forEach(cleanupCsvRec);
     
     var _DEBUG_HOOK = 0;
+    
+    // Arm event handlers for <buttons> and <select> boxes
+    //
+    $('#getDistrict').click(CTPS.lrtpOD.searchForDistrict);
+    $('#getMode').click(CTPS.lrtpOD.getMode);
+    $('#fetchDataOrigins').click(CTPS.lrtpOD.getOriginData);
+    $('#fetchDataDestinations').click(CTPS.lrtpOD.getDestinationData);
+    $('#resetData').click(CTPS.lrtpOD.clearSelection);
+    $('#display_districts_table').click(CTPS.lrtpOD.displayDistrictsTable);
+    $('#selected_mode').change(CTPS.lrtpOD.resetMode);
+    $('#selected_district').change(CTPS.lrtpOD.resetDisplay);
 
     // Populate "select district" combo box.
     var i;        
@@ -534,15 +597,15 @@ CTPS.lrtpOD.getOriginData = function(){
 									return;
 								}
 								
-								var sumOrigins = 0;
+								var i, sumOrigins = 0;
 								
 								// Compute sum of trips to use in calculating percentages for each origin
-								for (var i = 0; i < aFeatures.length; i++) {
+								for (i = 0; i < aFeatures.length; i++) {
 									sumOrigins += +(aFeatures[i].getProperties()[place_lowercase]);
 								}
 								
 								// Populate myDataOrigins table with WFS data
-								for (var i = 0; i < aFeatures.length; i++) {
+								for (i = 0; i < aFeatures.length; i++) {
 									var orig_index = +(aFeatures[i].getProperties()['table_index']);
 									var orig_zone = +(aFeatures[i].getProperties()['origins']);         
 									var orig_trips = +(aFeatures[i].getProperties()[place_lowercase]).toFixed(0);
@@ -988,7 +1051,7 @@ CTPS.lrtpOD.clearSelection = function() {
 	});	
 }; // clearSelection()
 
-/* **************     10. GET POPUP LIST OF ALL CODES AND REGION DEFINITIONS     ****************************/
-CTPS.lrtpOD.regions_table = function() {
+/* **************     10. GET POPUP LIST OF ALL CODES AND DISTRICT DEFINITIONS     ****************************/
+CTPS.lrtpOD.displayDistrictsTable = function() {
 	popup('regions_lut.html');
 }; // regions_table()

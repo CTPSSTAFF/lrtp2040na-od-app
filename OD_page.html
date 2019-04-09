@@ -79,11 +79,11 @@
     <!--  populate the combo box to allow choosing boarding station  -->
     <!--       <h2><label for="selected_district">Pick a District of Interest:</label></h2>   -->
         <form name="drop_list" action="" method="post" title="combo box used to select desired district">
-         <h2><label for="selected_district">Pick a District of Interest:</label></h2>
-            <select id="selected_district" onchange="CTPS.lrtpOD.resetDisplay()" title="use combo box to pick one of 41 Boston Region districts">                                            			
+         <h2><label for="selected_district">Select a District of Interest:</label></h2>
+            <select id="selected_district" title="use combo box to pick one of 41 Boston Region districts">                                            			
                 <option value="">Select a district</option>
             </select>
-            <input type="button" id="getTown" value="Locate District" onclick="CTPS.lrtpOD.searchForDistrict()" title="button displays selected district on map and opens combo box to select year and mode" />                                            
+            <input type="button" id="getDistrict" value="Locate District"  title="button displays selected district on map and opens combo box to select year and mode" />                                            
         </form>
     </div>	<!--    end of inputbox div  -->	
 
@@ -92,7 +92,7 @@
         <h2><label for="selected_mode">Get desired mode:</label></h2>         
    <!--     <span id='mode_header'>Get desired mode:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  -->
    <!--     <form name="drop_list2" action="" method="post" >      -->
-            <select id="selected_mode" onchange="CTPS.lrtpOD.resetMode()">
+            <select id="selected_mode">
                     <option value="">Select mode:</option>                    
                     <option value="1">2016: Auto person-trips</option>
                     <option value="2">2016: Transit person-trips</option>
@@ -104,23 +104,23 @@
                     <option value="8">2040: Truck trips</option>
                     
             </select>
-            <input type="button" id="getMode" value="Load Mode Table" onclick="CTPS.lrtpOD.getMode()" title="button loads table for selected district and year"/>                                
+            <input type="button" id="getMode" value="Load Mode Table" title="button loads table for selected district and year"/>                                
      <!--   </form>     -->
      <!--   </span>     -->
     </div> <!-- end of modeSelect div  -->
 
     <br />
     <div id="button_bar">
-                <input type="button" id="fetchDataOrigins" class="hidden" value="Get Origin Data" onclick="CTPS.lrtpOD.getOriginData()" title="button calls up table of origins for desired destination district." /> 
-                <input type="button" id="fetchDataDestinations" class="hidden" value="Get Destination Data" onclick="CTPS.lrtpOD.getDestinationData()" title="button calls up table of destinations for desired origin district."/>   
-                <input type="button" id="resetData" class="hidden" value="Clear Data" onclick="CTPS.lrtpOD.clearSelection()" title="button clears data table and district and mode selections"/>                        
+                <input type="button" id="fetchDataOrigins" class="hidden" value="Get Origin Data" title="button calls up table of origins for desired destination district." /> 
+                <input type="button" id="fetchDataDestinations" class="hidden" value="Get Destination Data" title="button calls up table of destinations for desired origin district."/>   
+                <input type="button" id="resetData" class="hidden" value="Clear Data" title="button clears data table and district and mode selections"/>                        
     </div>  <!-- end of button_bar div -->  
      
     <div id="trips_grid"></div>
     
     <span id='page_bottom' class='hidden'>
-        <label for="list_link">Click this button to see the <br />complete list of codes and <br />included towns:</label>&nbsp;&nbsp;
-        <input type='button' id='list_link' value='List of Districts' onclick='CTPS.lrtpOD.regions_table()' title="opens table of all districts" /> <br /><br />
+        <label for="display_districts_table">Click this button to see the <br />complete list of codes and <br />included towns:</label>&nbsp;&nbsp;
+        <input type='button' id='display_districts_table' value='List of Districts'  title="opens table of all districts" /> <br /><br />
         <!--     For all trips from corridors <br />to Boston Business District <br />and Central Area:&nbsp;&nbsp;
          <input type='button' id='BBD_window' value='Boston-Bound Trips' onclick='CTPS.lrtpOD.boston_trips()'  />     -->
    </span>
@@ -130,7 +130,6 @@
 $(document).ready(function() {
     CTPS.lrtpOD.preInit();
 });
-
 </script>
 
 </body>
