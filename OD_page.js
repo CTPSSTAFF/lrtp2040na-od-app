@@ -27,6 +27,12 @@ var MA_mask = 'postgis:ctps_ma_wo_model_area';
 var current_mode = 'AUTO';
 var year = '';
 
+// Global constants
+// Districts within the MPO are numbered from 1 through 42, inclusive
+// Districts outside the MPO are numbered from 51 through 55, inclusive
+var MAX_MPO_DISTRICT_NUM = 42;      // This value can hardly be a coincidence: Homage to Monty Python and His Holy Grail!
+var MAX_EXTERNAL_DISTRICT_NUM = 55;
+
 // Global store of O/D data read from CSV sources
 var OD_DATA = { 'hway_2016'     : null, 
                 'hway_2040'     : null,
@@ -71,7 +77,7 @@ CTPS.lrtpOD.styleOrigin = function(feature) {
 					width: 0.2
 				})
 	})];
-};
+}; // styleOrigin()
 
 CTPS.lrtpOD.styleDestination = function(feature) {
 	var fill;
@@ -105,8 +111,7 @@ CTPS.lrtpOD.styleDestination = function(feature) {
 					width: 0.2
 				})
 	})];
-};
-
+}; // styleDestination()
 
 /* ****************  1. UTILITY FUNCTIONS  ***************/
 // hide/unhide toggle, works in conjunction with class definition in CSS file--
@@ -129,7 +134,6 @@ function toggle_turn_on(divID) {
 	}
 }; // toggle_turn_on()
 
-
 // turns off 3 vector layers used to display ORIGIN and DESTINATION data; does not turn off 'selected district' layer
 function turn_off_vectors(){
     CTPS.lrtpOD.oDistrictVectorLayer.getSource().clear();
@@ -139,7 +143,7 @@ function popup(url) {
     popupWindow = window.open(url,'popUpWindow','height=700,width=600,left=600,top=10,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no,status=yes')
 }; // popup()
 
-// END of UTILITY FUNCTIONS
+// End of utility functions
 
 
 /* ****************  2. INITIALIZE PAGE, DRAW MAP  *****************/
@@ -165,11 +169,11 @@ CTPS.lrtpOD.preInit = function() {
                 .defer(d3.csv, trucks_2016_URL)
                 .defer(d3.csv, trucks_2040_URL)
                 .awaitAll(CTPS.lrtpOD.init);
-} // preInit()
+}; // preInit()
 
 CTPS.lrtpOD.init = function(error, results){
     if (error != null) {
-        alert("One or more requests to load data failed. Exiting application.");
+        alert("One or more requests to load CSV data failed. Exiting application.");
         return;         
     }        
     OD_DATA['hway_2016'] = results[0];
@@ -322,12 +326,11 @@ CTPS.lrtpOD.init = function(error, results){
             minZoom	: 2
         })
     });	 
-}	//   END OF 'INIT' FUNCTION
+}; // init()
 
 
 /* ****************  3. GET DESIRED DISTRICT AND DESIRED MODE, ADD TO HIGHLIGHT LAYER	****************/
 CTPS.lrtpOD.searchForDistrict = function(){
-
     // initialize variables/data store
 	CTPS.lrtpOD.oHighlightLayer.getSource().clear();
     CTPS.lrtpOD.oDistrictVectorLayer.getSource().clear();
@@ -402,27 +405,24 @@ CTPS.lrtpOD.searchForDistrict = function(){
 									}
 								);
 								*/
-							},  
+							},  // success handler
 			failure		: 	function (qXHR, textStatus, errorThrown ) {
 								alert('WFS request in searchForDistrict failed.\n' +
 										'Status: ' + textStatus + '\n' +
 										'Error:  ' + errorThrown);
-							}
-	});											                                        //	END OpenLayers Request
+							}   // failure handler
+	});	//	WFS request
         
     if ($('#modeSelect').attr('class')==='hidden'){
 		unhide('modeSelect');
-    };
-               
-};	// END 'SearchForDistrict' FUNCTION
-
+    }          
+};	// searchForDistrict()
 
 CTPS.lrtpOD.getMode = function(){
-
     var current_year = '2016', future_year = '2040';
    
     $('#trips_grid').html('');
-    if ($('#page_bottom').attr('class')==='unhidden'){                             // Link: get table of regions
+    if ($('#page_bottom').attr('class')==='unhidden'){   // Link: to display table of regions
 		unhide('page_bottom');
     };
          
@@ -491,19 +491,17 @@ CTPS.lrtpOD.getMode = function(){
 	$('#fetchDataDestinations').prop('disabled', false);
 	if ($('#fetchDataDestinations').attr('class')==='hidden'){
 		unhide('fetchDataDestinations');
-	};
+	}
 	
 	if ($('#resetData').attr('class')==='unhidden'){
 		unhide('resetData');
-	}; 
-    
-};
+	}
+}; // getMode()
 
 
 /* ****************  4. CREATE OPENLAYERS QUERY TO GET **ORIGIN** DATA FROM TABLE **COLUMN**, ADD TO     ***************
    ****************		DATA STORE, AND CALL 'queryVectorLayers' FUNCTION TO CREATE POLYGON LAYER 		 *************** */               
 CTPS.lrtpOD.getOriginData = function(){
-
     turn_off_vectors();
 
     if (CTPS.lrtpOD.oHighlightLayer.getSource().getFeatures().length === 0) { 
@@ -538,7 +536,7 @@ CTPS.lrtpOD.getOriginData = function(){
 								
 								var sumOrigins = 0;
 								
-								// COMPUTE SUM OF TRIPS TO USE IN CALCULATING PERCENTAGES FOR EACH ORIGIN
+								// Compute sum of trips to use in calculating percentages for each origin
 								for (var i = 0; i < aFeatures.length; i++) {
 									sumOrigins += +(aFeatures[i].getProperties()[place_lowercase]);
 								}
@@ -566,7 +564,10 @@ CTPS.lrtpOD.getOriginData = function(){
 									return 0;	//default value if no sorting
 								});
 					  
-								var dat_index = 1;	// marker for ORIGIN data
+								var dat_index = 1;	// Indication that data to be rendered is ORIGIN data   
+                                // The following call is OVERLOADED; it performs two functions;
+                                //     (1) renders origin data as vector layers on the OpenLayers map
+                                //     (2) renders origin data in tabular form
 								CTPS.lrtpOD.queryVectorLayers(dat_index);
 								if ($('#legendDest').attr('class')==='turned_on'){
 									toggle_turn_on('legendDest')
@@ -574,21 +575,19 @@ CTPS.lrtpOD.getOriginData = function(){
 								if ($('#legendOrig').attr('class')==='turned_off'){
 									toggle_turn_on('legendOrig')
 								}		
-							},  
+							},  // success handler
 			failure		: 	function (qXHR, textStatus, errorThrown ) {
 								alert('WFS request in getOriginData failed.\n' +
 										'Status: ' + textStatus + '\n' +
 										'Error:  ' + errorThrown);
-							}
-	});
-      
-} // END 'GetOriginData' FUNCTION
+							}   // failure handler
+	}); // WFS request
+}; // getOriginData()
 
 
 /* ****************  5. CREATE OPENLAYERS QUERY TO GET **DESTINATION** DATA FROM SINGLE TABLE **ROW**, ADD TO  	*************
    ****************     DATA STORE, AND CALL 'queryVectorLayers' FUNCTION TO CREATE POLYGON LAYER    			************* */
 CTPS.lrtpOD.getDestinationData = function(){
-
     turn_off_vectors();
 
     if (CTPS.lrtpOD.oHighlightLayer.getSource().getFeatures().length === 0) { 
@@ -623,38 +622,38 @@ CTPS.lrtpOD.getDestinationData = function(){
 
 								// Identify the feature of interest from WFS return:
 								var destinationData;
-								for (var i=0; i<aFeatures.length; i++){
+								for (var i = 0; i < aFeatures.length; i++){
 									if (aFeatures[i].getProperties()['origins'] === current_district){
 										destinationData = aFeatures[i].getProperties();
 									}
 								}
 								
-								// FIRST LOOP TO GET SUM OF TRIPS FOR PERCENTAGE CALCULATION	
+								// First loop to get sum of trips for percentage calculation	
 								var dest_zone = [];
 								var dest_trips = [];            
 								var sumDestinations = 0;
 								
-								for(var i=0; i<aFeatures.length; i++){
+								for(var i = 0; i < aFeatures.length; i++){
 									var dest_index = i + 1;        
-									var dest_number = (i<9)?'0'+dest_index:dest_index;
+									var dest_number = (i < 9) ? '0' + dest_index : dest_index;
 															   
-									if (i<41) {
+									if (i < MAX_MPO_DISTRICT_NUM) {
 										dest_zone[i] = 'gd' + dest_number;             
 									} else {
-										dest_zone[i] = 'gd' + (9 + dest_number);              
+										dest_zone[i] = 'gd' + (8 + dest_number);              
 									}
 															   
 									dest_trips[i] = +destinationData[dest_zone[i]];	
 									sumDestinations += dest_trips[i];                            
 								}                   
                          
-								// SECOND LOOP TO CALCULATE PERCENTAGES AND WRITE ALL DATA TO DATA STORE
-								for(var i=0; i<aFeatures.length; i++){
+								// Second loop to calculate percentages and write all data to data store
+								for(var i = 0; i < aFeatures.length; i++){
 									var dest_index = i + 1;                            
 									var dest_pct = ((dest_trips[i] / sumDestinations) * 100).toFixed(1) + '%';
 									
 									var dest_zone_trunc; 
-									if(i>8){
+									if(i > 8){
 										dest_zone_trunc = dest_zone[i].substr(2);
 									} else {
 										dest_zone_trunc = dest_zone[i].substr(3);
@@ -677,7 +676,10 @@ CTPS.lrtpOD.getDestinationData = function(){
 									return 0;	// default value if no sorting
 								});
               
-								var dat_index = 2;	// marker for DESTINATION data                    
+								var dat_index = 2;	// Indication that data to be rendered is DESTINATION data   
+                                // The following call is OVERLOADED; it performs two functions;
+                                //     (1) renders destination data as vector layers on the OpenLayers map
+                                //     (2) renders destination data in tabular form
 								CTPS.lrtpOD.queryVectorLayers(dat_index);
 								if ($('#legendOrig').attr('class')==='turned_on'){
 									toggle_turn_on('legendOrig')
@@ -685,14 +687,14 @@ CTPS.lrtpOD.getDestinationData = function(){
 								if ($('#legendDest').attr('class')==='turned_off'){
 									toggle_turn_on('legendDest')
 								}                    
-							},  
+							},  // success handler
 			failure		: 	function (qXHR, textStatus, errorThrown ) {
 								alert('WFS request in getDestinationData failed.\n' +
 										'Status: ' + textStatus + '\n' +
 										'Error:  ' + errorThrown);
-							}
-	});
-};	// END 'GetDestinationData' FUNCTION
+							}   // failure  handler
+	}); // WFS request
+};	// getDestinationData()
 
 
 /* 	***************  6.	GENERATE FILTER STATEMENT FOR DISCTRICT VECTOR LAYER,        					********************
@@ -715,25 +717,28 @@ CTPS.lrtpOD.queryVectorLayers = function(dat_index) {
 		CTPS.lrtpOD.oDistrictVectorLayer.setStyle(CTPS.lrtpOD.styleDestination);
 		break;
     default:
-		alert('no dat index passed');
+		alert('No data_index passed to queryVectorLayers.');
 		break;
     };
 	
 	// 2. Generate Data Store (CTPS.lrtpOD.myData) for table grid
 	var rec = []; 
-	var index,district,trips,pct_trips;
-	var maxloop;
+	var index, district, trips, pct_trips;
+	var maxloop, i;
+/*
 	if (tripData.length > 45){								//  NOTE FROM MARYMCS: this was included in CR app because WFS request failed if too long.
 		maxloop = 45;										//  Not sure if needed for current version; but data fields 41 to
 	} else {                                                //  44 are externals anyway--not represented as 'districts'
 		maxloop = tripData.length;
 	};
+*/
+    maxloop = tripData.length;
 	
-	for (var i=0; i<maxloop ;i++) {					        //	Assigns a "category" value to each district based on number of trips
+	for (i = 0; i < maxloop; i++) {					        //	Assigns a "category" value to each district based on number of trips
 		rec = tripData[i];                                  //  and writes district name to the filter statement for the relevant category 
 		index = rec[0];
 		district = rec[1];  
-        if(i<9){
+        if(i < 9){
             district_extend = 'gd0' + district;  
         } else {
             district_extend = 'gd' + district;
@@ -785,7 +790,7 @@ CTPS.lrtpOD.queryVectorLayers = function(dat_index) {
 								var reader = new ol.format.GeoJSON();
 								aFeatures = reader.readFeatures(jqXHR.responseText);
 								if (aFeatures.length === 0) {
-									// alert("?? No features found for Layer 1. szFilter is " + szFilter);
+									// alert("WFS request returned no features. szFilter is " + szFilter);
 									return;
 								};
 								// CTPS.lrtpOD.oDistrictVectorLayer.getSource().clear();
@@ -834,26 +839,23 @@ CTPS.lrtpOD.queryVectorLayers = function(dat_index) {
 										}
 									);
 								};
-							},  
+							},  // success handler  
 			failure		: 	function (qXHR, textStatus, errorThrown ) {
 								alert('WFS request in timerFunc failed.\n' +
 										'Status: ' + textStatus + '\n' +
 										'Error:  ' + errorThrown + '\n' + '\n' +
 										'Error: WFS request for 1st vector layer failed.');
-							}
-	});
-	
+							}   // failure handler
+	}); // WFS request
+    
 	// 7. Re-enable buttons (disabled at beginning of function)
 	$('#fetchDataOrigins').prop('disabled', false);
 	$('#fetchDataDestinations').prop('disabled', false);
 	$('#resetData').prop('disabled', false);
-	
-}; // END OF 'queryVectorLayers' FUNCTION
-
+}; // queryVectorLayers()
 
 /* 	***************	 7. WRITE DATA TO GRID 'trips_grid' USING SELECTED DATA SOURCE   ******************  */
 CTPS.lrtpOD.renderToGrid = function(dat_index) {
- 
         $('#trips_grid').html('');
        
         var which_data = '';
@@ -865,7 +867,7 @@ CTPS.lrtpOD.renderToGrid = function(dat_index) {
 			which_data = ' FROM district';
 			break;
 		default:
-			alert('no value passe for dat_index');
+			alert('Error: renderToGrid: No value passed as dat_index.');
 			break;             
         };
              
@@ -920,7 +922,7 @@ CTPS.lrtpOD.renderToGrid = function(dat_index) {
 			CTPS.lrtpOD.DestinationGrid.loadArrayData(CTPS.lrtpOD.myData);
 			break;
 		default:
-			alert('nothing exported to grid');
+			alert('renderToGrid: No data rendered to grid.');
 			break;
 		};
                
@@ -928,8 +930,7 @@ CTPS.lrtpOD.renderToGrid = function(dat_index) {
 			unhide('page_bottom');
 		};
             
-}; // END 'renderToGrid' FUNCTION
-
+}; // renderToGrid()
 
 /* ************  8. RESET DISPLAY AFTER COMBO BOX SELECTION CHANGES--BUT **NOT COMBO BOX ITSELF**  ****************/
 /* ************      (invokes 'resetMode'--which keeps same selected district but zeroes out map and grid) *********/
@@ -944,7 +945,7 @@ CTPS.lrtpOD.resetDisplay = function() {
 	if ($('#modeSelect').attr('class')==='unhidden'){                            // Button: Get Destination Data
 		unhide('modeSelect');
 	};
-} //  END 'resetDisplay' FUNCTION
+}; //  resetDisplay()
 
 /* ********************   NOTE:  resetMode can be invoked separately if only desired mode changes   *************************/
 CTPS.lrtpOD.resetMode = function(){
@@ -974,8 +975,7 @@ CTPS.lrtpOD.resetMode = function(){
 		toggle_turn_on('legendDest');
 	};
 	turn_off_vectors();
-}; // END 'resetMode' FUNCTION
-
+}; // resetMode()
 
 /* *************      9. CLEAR ALL VECTOR LAYERS AS WELL AS COMBO BOX USED TO SELECT DISTRICT   *************/
 CTPS.lrtpOD.clearSelection = function() {
@@ -986,11 +986,9 @@ CTPS.lrtpOD.clearSelection = function() {
 		zoom: CTPS.lrtpOD.mapZoom,
 		duration: 2000
 	});	
-}; // END 'clearSelection' FUNCTION
-
+}; // clearSelection()
 
 /* **************     10. GET POPUP LIST OF ALL CODES AND REGION DEFINITIONS     ****************************/
 CTPS.lrtpOD.regions_table = function() {
 	popup('regions_lut.html');
-}; // CTPS.lcApp.regions_table()
-
+}; // regions_table()
