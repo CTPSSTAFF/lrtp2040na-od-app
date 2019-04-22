@@ -59,9 +59,9 @@
 //
 // It is clear that aside from modifying the app to use CSV data sources rather than performing (repeated) WFS requests
 // to get O/D data, the code for this app is in need of a lot of TLC. How much can be applied is a function of budget
-// and schedule matters outside of this reporter's control. I just have to make the damned thing work with the 2016/2040 data.
+// and schedule matters outside of this reporter's control. The only requirement is to make the damned thing work with the 2016/2040 data.
 // 
-// -- B. Krepp 4/09/2019
+// -- B. Krepp 09 April 2019
 
 var CTPS = {};
 CTPS.lrtpOD = {};
@@ -94,19 +94,20 @@ var current_mode = 'AUTO';
 var year = '';
 
 // Global constants
-// Districts within the MPO are numbered from 1 through 42, inclusive
-// Districts outside the MPO are numbered from 51 through 55, inclusive
-var MAX_MPO_DISTRICT_NUM = 42;      // This value can hardly be a coincidence: Homage to Monty Python and His Holy Grail!
-var MAX_EXTERNAL_DISTRICT_NUM = 55;
+// Districts within the MPO are numbered from 1 through 41, inclusive
+// Districts outside the MPO are numbered from 51 through 54, inclusive
+var MAX_MPO_DISTRICT_NUM = 41; 
+var MAX_EXTERNAL_DISTRICT_NUM = 54;
 var districtNums =  [1,   2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
                      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 
-                     41, 42, 51, 52, 53, 54, 55];
+                     41, 
+                     51, 52, 53, 54];
 var districtNames = ['gd01', 'gd02', 'gd03', 'gd04', 'gd05', 'gd06', 'gd07', 'gd08', 'gd09', 'gd10', 
                      'gd11', 'gd12', 'gd13', 'gd14', 'gd15', 'gd16', 'gd17', 'gd18', 'gd19', 'gd20', 
                      'gd21', 'gd22', 'gd23', 'gd24', 'gd25', 'gd26', 'gd27', 'gd28', 'gd29', 'gd30', 
                      'gd31', 'gd32', 'gd33', 'gd34', 'gd35', 'gd36', 'gd37', 'gd38', 'gd39', 'gd40', 
-                     'gd41', 'gd42',
-                     'gd51', 'gd52', 'gd53', 'gd54', 'gd55'];
+                     'gd41',
+                     'gd51', 'gd52', 'gd53', 'gd54'];
 
 // Global store of O/D data read from CSV sources
 var OD_DATA = { 'hway_2016'     : null, 
@@ -271,8 +272,8 @@ CTPS.lrtpOD.init = function(error, results){
         rec.gd26 = +rec.gd26; rec.gd27 = +rec.gd27; rec.gd28 = +rec.gd28; rec.gd29 = +rec.gd29; rec.gd30 = +rec.gd30;
         rec.gd31 = +rec.gd31; rec.gd32 = +rec.gd32; rec.gd33 = +rec.gd33; rec.gd34 = +rec.gd34; rec.gd35 = +rec.gd35;
         rec.gd36 = +rec.gd36; rec.gd37 = +rec.gd37; rec.gd38 = +rec.gd38; rec.gd39 = +rec.gd39; rec.gd40 = +rec.gd40;
-        rec.gd41 = +rec.gd41; rec.gd42 = +rec.gd42;
-        rec.gd51 = +rec.gd51; rec.gd52 = +rec.gd52; rec.gd53 = +rec.gd53; rec.gd54 = +rec.gd54; rec.gd55 = +rec.gd55;
+        rec.gd41 = +rec.gd41;
+        rec.gd51 = +rec.gd51; rec.gd52 = +rec.gd52; rec.gd53 = +rec.gd53; rec.gd54 = +rec.gd54;
     } 
     
     OD_DATA['hway_2016'].forEach(cleanupCsvRec);
@@ -301,10 +302,10 @@ CTPS.lrtpOD.init = function(error, results){
     var i;        
     var oSelect = document.getElementById("selected_district"); 
     var oOption;  // An <option> to be added to the  <select>.
-    for (i = 0; i < MPMUTILS.modelRegions_2012.length; i++) {           
+    for (i = 0; i < MPMUTILS.modelDistricts_2016.length; i++) {           
         oOption = document.createElement("OPTION");
-        oOption.value = MPMUTILS.modelRegions_2012[i][0];
-        oOption.text = MPMUTILS.modelRegions_2012[i][0] + ', ' + MPMUTILS.modelRegions_2012[i][1];        
+        oOption.value = MPMUTILS.modelDistricts_2016[i][0];
+        oOption.text = MPMUTILS.modelDistricts_2016[i][0] + ', ' + MPMUTILS.modelDistricts_2016[i][2];        
         oSelect.options.add(oOption);
     };
     
@@ -313,30 +314,44 @@ CTPS.lrtpOD.init = function(error, results){
         source: new ol.source.TileWMS({
             url		:  CTPS.lrtpOD.szWMSserverRoot,
             params	: {
-                'LAYERS': 	[	ne_states,
+                'LAYERS': 	[
+                                ne_states,
                                 roadways,
                                 MA_mask,
                                 OD_districts,
+                                
                                 towns_base	],
-                'STYLES': 	[	'ne_states',
+                'STYLES': 	[	
+                               'ne_states',
                                 'RoadsMultiscaleGroupedBGblue',
                                 'non_boston_mpo_gray_mask',
+                                
                                 'Dest2040_districts_ext_numbers',
+                                
                                 'Dest2040_towns_OD_boundaries'	],
-                'TILED': 	[	'true',
+                'TILED': 	[	
                                 'true',
                                 'true',
                                 'true',
+                                
+                                'true',
+                                
                                 'false'	],
-                'TRANSPARENT': 	[	'false',
+                'TRANSPARENT': 	[	
+                                    'false',
                                     'true',
                                     'true',
+                                    
                                     'true',
+                                    
                                     'true'	],
-                'IDS' : [	'ne_states',
+                'IDS' : [	
+                            'ne_states',
                             'roadways',
                             'non_boston_mpo_gray_mask',
+                            
                             'OD_districts',
+                            
                             'towns_base'	]
             }
         })
