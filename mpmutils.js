@@ -42,7 +42,7 @@ MPMUTILS.modelRegions = [
 ["gd38","Foxborough, Wrentham, Mansfield, Plainville, North Attleborough, Attleboro, Norton"],
 ["gd39","East Bridgewater, West Bridgewater, Easton, Bridgewater, Raynham,Taunton, Middleborough, Lakeville"],
 ["gd40","Marshfield, Duxbury, Plymouth, Pembroke, Hanson, Halifax, Kingston, Plympton, Carver"]
-] //  end MPMUTILS.modelRegions
+]; //  end MPMUTILS.modelRegions
 
 // 2012 model regions: (Again, these really should be called "districts".)
 MPMUTILS.modelRegions_2012 = [
@@ -153,10 +153,30 @@ MPMUTILS.externals_2016 = [
 [54, "gd54","Southeast of Boston MPO (South Shore, Fall River-New Bedford, Cape Cod, etc.)"]
 ];  //  end MPMUTILS.externals_2016
 
+// 2012 O/D corridors:
+//                  0          1              2               3                4                
+//  Fields are:  INDEX   OD_CORRIDOR	CORRIDOR_NO	    CORRIDOR_TXT	OD_CORRIDOR_NAME
+MPMUTILS.OD_corridors_2012 = [   
+        [1,'OD_BOS',1,'1','Boston Business District'],
+        [2,'OD_CEN',2,'2','Central Area'],
+        [3,'OD_NE',3,'3','Northeast Corridor'],
+        [4,'OD_N',4,'4','North Corridor'],
+        [5,'OD_NW',5,'5','Northwest Corridor'],
+        [6,'OD_W',6,'6','West Corridor'],
+        [7,'OD_SW',7,'7','Southwest Corridor'],
+        [8,'OD_SE',8,'8','Southeast Corridor'],
+        [9,'OD_O_SE',9,'9','Ext. Southeast Corridor'],
+        [10,'OD_O_SW',10,'10','Ext. Southwest Corridor'],
+        [11,'OD_O_W',11,'11','Ext. West Corridor'],
+        [12,'OD_O_NW',12,'12','Ext. Northwest Corridor'],
+        [13,'OD_O_NE',13,'13','Ext. Northeast Corridor'],
+        [14,'OD_O_N',14,'14','Ext. North Corridor']
+]; //  end MPMUTILS.OD_corridors_2012
+
 // 2016 O/D corridors:
 //                  0          1              2               3                4                
 //  Fields are:  INDEX   OD_CORRIDOR	CORRIDOR_NO	    CORRIDOR_TXT	OD_CORRIDOR_NAME
-MPMUTILS.OD_corridors = [   
+MPMUTILS.OD_corridors_2016 = [
         [1,'OD_BOS',1,'1','Boston Business District'],
         [2,'OD_CEN',2,'2','Central Area'],
         [3,'OD_NE',3,'3','Northeast Corridor'],
@@ -176,4 +196,4 @@ MPMUTILS.OD_corridors = [
         ,[15, 'OD_O_STATEWIDE', 15, '15', "Outer towns in MPO 'statewide' model"],
          [16, 'OD_O_EXTERNAL', 16, '16', 'External to model area']
         */ 
-];       //  end MPMUTILS.OD_corridors
+]; // end MPMUTILS.OD_corridors_2016
