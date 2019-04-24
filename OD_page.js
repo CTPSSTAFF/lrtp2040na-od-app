@@ -57,9 +57,9 @@
 //      CTPS.lrtpOD.myDataOrigins - last set of origin data retreived by WFS, and filtered by CTPS.lrtpOD.getOriginData
 //      CTPS.lrtpOD.myDataDestinations - last set of destination data retreived by WFS, and filtered by CTPS.lrtpOD.getDestinationData
 //
-// It is clear that aside from modifying the app to use CSV data sources rather than performing (repeated) WFS requests
-// to get O/D data, the code for this app is in need of a lot of TLC. How much can be applied is a function of budget
-// and schedule matters outside of this reporter's control. The only requirement is to make the damned thing work with the 2016/2040 data.
+// It is clear that aside from any attempt to modify the app to use CSV data sources rather than performing (repeated) WFS requests
+// to get O/D data, the code for this app is in need of a lot of TLC. How much can be applied in the near-term is a function of budget
+// and schedule matters outside of the control of yours truly. The only requirement is to make the damned thing work with the 2016/2040 data.
 // 
 // -- B. Krepp 09 April 2019
 
@@ -85,10 +85,18 @@ CTPS.lrtpOD.szWFSserverRoot = CTPS.lrtpOD.szServerRoot + '/wfs';
 var ne_states = 'postgis:mgis_nemask_poly';
 var towns_base = 'postgis:dest2040_towns_modelarea';
 var MA_mask = 'postgis:ctps_ma_wo_model_area';
-var OD_districts = 'postgis:dest2040_districts_sm_circles';
 var roadways = 'postgis:ctps_roadinventory_grouped';
+
+// Global vars for app-specific data
+// NOTE: At least for the moment, ONLY the geographic data specific to "dest_2040"
+//       is kept in the "dest_2040_viewer" namespace / "dest_2040" store.
+//       The purely tabular data is kept in the "postgis" namespace / "mpodata" store,
+//       for historical reasons as it was created there before the decision was taken
+//       to keep each set of app-specific data in its own namespace / store.
+var OD_districts = 'dest2040_viewer:dest2040_districts_sm_circles';
 // Selected WFS layer with O/D data
-var trips_crosstab = 'postgis:dest2040_od_hway_2016';   // Default: just a placeholder
+var trips_crosstab = 'postgis:dest2040_od_hway_2016';   // Default table: just a placeholder
+
 // Misc global vars
 var current_mode = 'AUTO';
 var year = '';
